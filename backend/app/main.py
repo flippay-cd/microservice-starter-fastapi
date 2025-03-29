@@ -38,14 +38,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     resource_initializer = container.init_resources()
     if resource_initializer:
-        logger.info("Инициализирую ресурсы...")
+        logger.info("Initializing resources...")
         await resource_initializer
 
     yield
 
     resource_finalizer = container.shutdown_resources()
     if resource_finalizer:
-        logger.info("Освобождаю ресурсы...")
+        logger.info("Freeing up resources...")
         await resource_finalizer
 
 

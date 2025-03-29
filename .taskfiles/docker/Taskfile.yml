@@ -3,13 +3,13 @@
 version: '3'
 
 tasks:
-  login:gitlab:
-    desc: Login to GitLab Docker Registry
+  login:github:
+    desc: Login to GitHub Docker Registry
     cmds:
-      - docker login registry.tripster.ru -u ${DOCKER_GITLAB_USER} -p ${DOCKER_GITLAB_TOKEN}
+      - docker login registry.flippay.com -u ${DOCKER_GITHUB_USER} -p ${DOCKER_GITHUB_TOKEN}
     preconditions:
-      - sh: test -n "$DOCKER_GITLAB_USER" -a -n "$DOCKER_GITLAB_TOKEN"
-        msg: "You need to set environment variables DOCKER_GITLAB_USER and DOCKER_GITLAB_TOKEN"
+      - sh: test -n "$DOCKER_GITHUB_USER" -a -n "$DOCKER_GITHUB_TOKEN"
+        msg: "You need to set environment variables DOCKER_GITHUB_USER and DOCKER_GITHUB_TOKEN"
     run: once
 
   up:

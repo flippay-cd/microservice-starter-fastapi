@@ -4,7 +4,7 @@
   API_GATEWAY_PATH: "/{{ api_gateway_path }}"
 {%- endif %}
 {%- if cache == 'redis' %}
-  REDIS_HOST: "redis-{{ project_slug }}-staging.tripster-{{ project_slug }}-staging.svc.cluster.local"
+  REDIS_HOST: "redis-{{ project_slug }}-staging.flippay-{{ project_slug }}-staging.svc.cluster.local"
   REDIS_PORT: "6379"
 {%- endif %}
 {%- if broker == 'rabbitmq' %}
@@ -15,7 +15,7 @@
 {%- endif %}
 {%- if db == 'postgres' %}
 .postgres_env_template: &postgres_env
-  POSTGRES_HOST: "postgres-{{ project_slug }}-staging.tripster-{{ project_slug }}-staging.svc.cluster.local"
+  POSTGRES_HOST: "postgres-{{ project_slug }}-staging.flippay-{{ project_slug }}-staging.svc.cluster.local"
   POSTGRES_DB: "{{ package_name }}"
   POSTGRES_USER: "{{ package_name }}"
   POSTGRES_PORT: "5432"
@@ -56,8 +56,8 @@
 {%- endif %}
 {%- if ingress == 'public-subdomain' %}
     generate_certificate: true
-    tls_name: "{{ project_slug }}.dev.tripster.tech-wild-tls"
-    url: "{{ project_slug }}.dev.tripster.tech"
+    tls_name: "{{ project_slug }}.dev.flippay.tech-wild-tls"
+    url: "{{ project_slug }}.dev.flippay.tech"
     paths: [
       "/",
     ]

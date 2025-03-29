@@ -2,28 +2,28 @@ apiVersion: v2
 name: "{{ project_slug }}"
 version: 1.0.0
 dependencies:
-- name: tripster-app
+- name: flippay-app
   alias: "{{ project_slug }}"
   export-values:
   - parent: werf
     child: werf
-  repository: "@helm-tripster-app"
+  repository: "@helm-flippay-app"
   version: "{{ helm_chart_version }}"
 {%- if worker == 'dramatiq' %}
-- name: tripster-app
+- name: flippay-app
   alias: dramatiq-worker
   export-values:
   - parent: werf
     child: werf
-  repository: "@helm-tripster-app"
+  repository: "@helm-flippay-app"
   version: "{{ helm_chart_version }}"
 {%- endif %}
 {%- if event_bus_consumer == 'faststream' %}
-- name: tripster-app
+- name: flippay-app
   alias: faststream
   export-values:
   - parent: werf
     child: werf
-  repository: "@helm-tripster-app"
+  repository: "@helm-flippay-app"
   version: "{{ helm_chart_version }}"
 {%- endif %}

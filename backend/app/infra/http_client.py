@@ -36,11 +36,11 @@ class AsyncHttpClient(IHttpClient):
 
     async def __aenter__(self) -> Self:
         if self._client is None:
-            logger.info("Устанавливаю соединение с %s...", self._host)
+            logger.info("Establishing connection with %s...", self._host)
             self._client = httpx.AsyncClient(base_url=self._host, timeout=self._timeout)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._client is not None:
-            logger.info("Закрываю соединение с %s", self._host)
+            logger.info("Closing the connection with %s", self._host)
             await self._client.aclose()

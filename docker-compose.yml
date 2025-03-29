@@ -21,9 +21,9 @@ x-backend: &backend
     dockerfile: ./Dockerfile
     target: dev
     args:
-      CI_SERVER_HOST: gitlab.tripster.ru
-      CI_JOB_TOKEN: $DOCKER_GITLAB_TOKEN
-      CI_USER: $DOCKER_GITLAB_USER
+      CI_SERVER_HOST: github.flippay.cd
+      CI_JOB_TOKEN: $DOCKER_GITHUB_TOKEN
+      CI_USER: $DOCKER_GITHUB_USER
   restart: unless-stopped
   {%- if db != 'no' or broker != 'no' or cache != 'no' %}
   depends_on:
@@ -82,7 +82,7 @@ services:
 
   {%- if http_framework == 'fastapi' %}
   openapi:
-    image: "registry.tripster.ru/experience/openapi-tripster-generator:1.4.0"
+    image: "registry.flippay.cd/openapi-flippay-generator:1.4.0"
     profiles:
       - openapi
     <<:
@@ -91,8 +91,8 @@ services:
       - USER_ID=${OPENAPI_UID}
       - GROUP_ID=${OPENAPI_GID}
     volumes:
-      - ./openapi:/usr/src/openapi-tripster-generator/openapi
-      - ./backend/app/api:/usr/src/openapi-tripster-generator/backend/app/api
+      - ./openapi:/usr/src/openapi-flippay-generator/openapi
+      - ./backend/app/api:/usr/src/openapi-flippay-generator/backend/app/api
   {%- endif %}
 
   {%- if db == 'postgres' %}

@@ -1,4 +1,5 @@
 # https://taskfile.dev
+# TODO: 
 
 version: '3'
 
@@ -7,11 +8,11 @@ tasks:
     desc: Add helm chart to project
     cmds:
       - |
-        werf helm repo add --force-update --username $DOCKER_GITLAB_USER --password $DOCKER_GITLAB_TOKEN \
-          helm-tripster-app https://gitlab.tripster.ru/api/v4/projects/100/packages/helm/stable
+        werf helm repo add --force-update --username $DOCKER_GITHUB_USER --password $DOCKER_GITHUB_TOKEN \
+          helm-flipay-app TODO:add a valid package name
     preconditions:
-      - sh: test -n "$DOCKER_GITLAB_USER" -a -n "$DOCKER_GITLAB_TOKEN"
-        msg: "You need to set environment variables DOCKER_GITLAB_USER and DOCKER_GITLAB_TOKEN"
+      - sh: test -n "$DOCKER_GITHUB_USER" -a -n "$DOCKER_GITHUB_TOKEN"
+        msg: "You need to set environment variables DOCKER_GITHUB_USER and DOCKER_GITHUB_TOKEN"
     run: once
 
   helm:update:

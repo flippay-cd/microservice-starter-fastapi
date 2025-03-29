@@ -5,8 +5,8 @@ from fastapi import HTTPException, Request, status
 
 class ApiGatewayJWTAuth:
     """
-    Аутентификация, использующая API Gateway JWT токен.
-    Возвращает user_id, если пользователь был успешно аутентифицирован.
+    Authentication using API Gateway JWT token.
+    Returns user_id if the user was successfully authenticated.
     """
 
     auth_header = "Authorization"

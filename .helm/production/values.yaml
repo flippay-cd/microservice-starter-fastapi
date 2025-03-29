@@ -12,7 +12,7 @@
 {%- endif %}
 {%- if broker == 'rabbitmq' %}
     RABBITMQ_USER: "{{ package_name }}"
-    RABBITMQ_HOST: "rabbitmq-tripster.rabbit-production.svc.cluster.local"
+    RABBITMQ_HOST: "rabbitmq-flippay.rabbit-production.svc.cluster.local"
     RABBITMQ_PORT: "5672"
     RABBITMQ_QUEUE: "{{ package_name }}"
 {%- endif %}
@@ -37,7 +37,7 @@
     generate_certificate: false
     tls_name: "{{ top_domain }}-wild-tls"
     strip_to_root: true
-    url: "experience.{{ top_domain }}"
+    url: "flippay.{{ top_domain }}"
     paths: [
       "/{{ api_gateway_path }}",
     ]

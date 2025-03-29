@@ -1,0 +1,106 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  ENABLE_ALL_IMAGES: "false"
+  ENABLE_DEV_IMAGES: "false"
+
+jobs:
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    env:
+      ENABLE_DEV_IMAGES: "true"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Dev Image with Werf
+        run: |
+          werf build dev --save-build-report
+          echo "DEV_IMAGE_NAME=$(jq -r .Images.dev.DockerImageName < .werf-build-report.json)" >> $GITHUB_ENV
+
+  lint:
+    name: Lint Code
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ env.DEV_IMAGE_NAME }}
+    steps:
+      - name: Run Linter
+        run: task ci:lint
+
+  check_migrations:
+    name: Check Database Migrations
+    needs: build
+    if: contains(env.DB, 'postgres')
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ env.DEV_IMAGE_NAME }}
+    steps:
+      - name: Check Migrations
+        run: task ci:migrations:check
+
+  test:
+    name: Run Tests
+    needs: [build, lint]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ env.DEV_IMAGE_NAME }}
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+    env:
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: postgres
+      PROJECT_NAME: ${{ github.event.repository.name }}
+    steps:
+      - name: Run Tests
+        run: task ci:tests
+
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: report.xml
+
+  deploy_staging:
+    name: Deploy to Staging
+    needs: test
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install experience .helm/staging/ \
+            --values .helm/staging/values.yaml \
+            --values .helm/staging/secret-values.yaml
+
+  deploy_production:
+    name: Deploy to Production
+    needs: deploy_staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install experience .helm/production/ \
+            --values .helm/production/values.yaml \
+            --values .helm/production/secret-values.yaml
