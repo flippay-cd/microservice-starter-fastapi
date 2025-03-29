@@ -1,0 +1,16 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  run:dev:
+    desc: Run http server in development
+    cmds:
+      - python -m uvicorn_dev
+    dir: ./backend/app
+
+  run:prod:
+    desc: Run http server in production
+    cmds:
+      - python -m uvicorn_prod
+    dir: ./backend/app

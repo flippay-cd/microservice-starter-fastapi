@@ -1,0 +1,45 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "{{ project_name }} metrics API",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000"
+        }
+    ],
+    "tags": [
+        {
+            "name": "metricsApi",
+            "description": "Everything about metrics"
+        }
+    ],
+    "paths": {
+        "/metrics": {
+            "get": {
+                "tags": [
+                    "metrics"
+                ],
+                "operationId": "metrics",
+                "description": "Metrics endpoint. Returns metrics in prometheus text-based format",
+                "summary": "Metrics endpoint for Prometheus",
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

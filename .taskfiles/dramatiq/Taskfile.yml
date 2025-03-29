@@ -1,0 +1,16 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  run:dev:
+    desc: Run dramatiq in development
+    cmds:
+      - python -m dramatiq  # TODO: Add parameters
+    dir: ./backend/app
+
+  run:prod:
+    desc: Run dramatiq in production
+    cmds:
+      - python -m dramatiq # TODO: Add parameters
+    dir: ./backend/app

@@ -1,0 +1,27 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  lint:
+    desc: Run linters in CI
+    cmds:
+      - task: :lint:all
+
+  tests:
+    desc: Run tests in CI
+    cmds:
+      - pytest --cov --cov-report=xml:./coverage.xml -n 1 --junitxml=./report.xml ./backend/app
+
+  migrations:check:
+    desc: Migration check in CI
+    cmds:
+      - python migrations/check_migrations.py --config alembic.ini --no-db
+    dir: ./backend/app
+
+  migrations:upgrade:
+    desc: Run migrations in CI
+    cmds:
+      - python migrations/check_migrations.py --config alembic.ini --silent-diff-check
+      - alembic upgrade head
+    dir: ./backend/app

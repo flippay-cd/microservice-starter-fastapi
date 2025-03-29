@@ -1,0 +1,165 @@
+name: {{ docker_compose_project_name }}
+
+# Configuration parts to reuse
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "200k"
+      max-file: "10"
+
+x-project: &project
+  volumes:
+    - .:/app:delegated
+    - pip_cache:/root/.cache/pip:delegated
+
+x-backend: &backend
+  profiles:
+    - dev
+  build:
+    context: ./
+    dockerfile: ./Dockerfile
+    target: dev
+    args:
+      CI_SERVER_HOST: gitlab.tripster.ru
+      CI_JOB_TOKEN: $DOCKER_GITLAB_TOKEN
+      CI_USER: $DOCKER_GITLAB_USER
+  restart: unless-stopped
+  {%- if db != 'no' or broker != 'no' or cache != 'no' %}
+  depends_on:
+    {%- if db == 'postgres' %}
+    postgres:
+      condition: service_started
+    {%- endif %}
+    {%- if broker == 'rabbitmq' %}
+    rabbitmq:
+      condition: service_started
+    {%- endif %}
+    {%- if cache == 'redis' %}
+    redis:
+      condition: service_started
+    {%- endif %}
+  {%- endif %}
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  env_file:
+    - .env
+    - .env-docker
+
+services:
+  {%- if http_framework != 'no' %}
+  # Service with API
+  backend:
+    <<:
+      - *backend
+      - *logging
+      - *project
+    command: "http:run:dev"
+    ports:
+      - "127.0.0.1:${DOCKER_HTTP_PORT:-8000}:${HTTP_PORT:-8000}"
+    environment:
+      - HTTP_HOST=0.0.0.0
+  {%- endif %}
+
+  {%- if worker == 'dramatiq' %}
+  worker:
+    <<:
+      - *backend
+      - *logging
+      - *project
+    command: "dramatiq:run:dev"
+  {%- endif %}
+
+  shell:
+    <<:
+      - *backend
+      - *logging
+      - *project
+    profiles:
+      - shell
+    entrypoint: ""
+    command: "bash"
+
+  {%- if http_framework == 'fastapi' %}
+  openapi:
+    image: "registry.tripster.ru/experience/openapi-tripster-generator:1.4.0"
+    profiles:
+      - openapi
+    <<:
+      - *logging
+    environment:
+      - USER_ID=${OPENAPI_UID}
+      - GROUP_ID=${OPENAPI_GID}
+    volumes:
+      - ./openapi:/usr/src/openapi-tripster-generator/openapi
+      - ./backend/app/api:/usr/src/openapi-tripster-generator/backend/app/api
+  {%- endif %}
+
+  {%- if db == 'postgres' %}
+  postgres:
+    image: "postgres:{{ postgres_version }}"
+    profiles:
+      - dev
+      - infrastructure
+    <<:
+      - *logging
+    volumes:
+      - postgres_db:/var/lib/postgresql/data:delegated
+    ports:
+      - "127.0.0.1:${DOCKER_POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - .env
+    restart: unless-stopped
+  {%- endif %}
+
+  {%- if cache == 'redis' %}
+  redis:
+    image: "redis:alpine"
+    profiles:
+      - dev
+      - infrastructure
+    <<:
+      - *logging
+    ports:
+      - "127.0.0.1:${DOCKER_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_db:/data/:delegated
+    restart: unless-stopped
+  {%- endif %}
+
+  {%- if broker == 'rabbitmq' %}
+  rabbitmq:
+    image: "rabbitmq:{{ rabbitmq_version }}-management"
+    profiles:
+      - dev
+      - infrastructure
+    <<:
+      - *logging
+    ports:
+      - "127.0.0.1:${DOCKER_RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${DOCKER_RABBITMQ_HTTP_PORT:-15672}:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq:delegated
+    env_file:
+      - .env
+    restart: unless-stopped
+  {%- endif %}
+
+volumes:
+  pip_cache:
+  {%- if db == 'postgres' %}
+  postgres_db:
+  {%- endif %}
+  {%- if cache == 'redis' %}
+  redis_db:
+  {%- endif %}
+  {%- if broker == 'rabbitmq' %}
+  rabbitmq_data:
+  {%- endif %}

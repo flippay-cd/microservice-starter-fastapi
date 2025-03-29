@@ -1,0 +1,95 @@
+# https://taskfile.dev
+
+version: '3'
+
+includes:
+  setup: .taskfiles/setup
+  python: .taskfiles/python
+  {%- if db != 'no' %}
+  db: .taskfiles/db
+  {%- endif %}
+  {%- if worker == 'dramatiq' %}
+  dramatiq: .taskfiles/dramatiq
+  {%- endif %}
+  {%- if http_framework == 'fastapi' %}
+  http: .taskfiles/http
+  {%- endif %}
+  {%- if event_bus_consumer == 'faststream' %}
+  faststream: .taskfiles/faststream
+  {%- endif %}
+  docker: .taskfiles/docker
+  lint: .taskfiles/lint
+  tests: .taskfiles/tests
+  werf: .taskfiles/werf
+  ci: .taskfiles/ci
+
+dotenv:
+  - .env-taskfile
+
+tasks:
+  pre-commit:
+    desc: Run all necessary actions before commit
+    cmds:
+      - task: lint:format
+      - task: lint:all
+
+  pre-commit:hook:
+    desc: Run all necessary pre-commit checks in git hook
+    cmds:
+      - task: lint:all
+
+  run:tests:
+    desc: Running tests locally
+    cmds:
+      - task: tests:pytest
+    deps:
+      - setup:local-env
+      - python:requirements
+      - setup:openapi
+      - docker:up
+    preconditions:
+      - sh: test -n "$VIRTUAL_ENV"
+        msg: "Needs to be run from virtualenv"
+
+  run:backend:dev:
+    desc: Running a backend in development
+    cmds:
+      - task: http:run:dev
+    deps:
+      - setup:local-env
+      - python:requirements
+      - setup:openapi
+      - docker:up
+    preconditions:
+      - sh: test -n "$VIRTUAL_ENV"
+        msg: "Needs to be run from virtualenv"
+
+  {%- if worker != 'no' %}
+  run:worker:dev:
+    desc: Running a worker in development
+    cmds:
+      - task: dramatiq:run:dev
+    deps:
+      - setup:local-env
+      - python:requirements
+      - setup:openapi
+      - docker:up
+    preconditions:
+      - sh: test -n "$VIRTUAL_ENV"
+        msg: "Needs to be run from  virtualenv"
+  {%- endif %}
+
+  {%- if event_bus_consumer != 'no' %}
+  run:event_bus_consumer:dev:
+    desc: Running event_bus_consumer in development
+    cmds:
+      - task: faststream:run:dev
+    deps:
+      - setup:local-env
+      - python:requirements
+      - setup:openapi
+      - docker:up
+    preconditions:
+      - sh: test -n "$VIRTUAL_ENV"
+        msg: "Needs to be run from virtualenv"
+  {%- endif %}

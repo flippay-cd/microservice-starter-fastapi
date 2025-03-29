@@ -1,0 +1,1 @@
+allow = ["dal", "domain", "services", "utils"]

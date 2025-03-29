@@ -1,0 +1,54 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  format:code:
+    desc: Reformat python code
+    cmds:
+      - ruff check --select I,F401 --fix ./backend
+      - ruff format ./backend
+
+  format:sort-env-files:
+    desc: Sort files .env*
+    cmds:
+      - LC_COLLATE=POSIX find . -name ".env*" -type f -exec sort -o {} {} \;
+
+  format:check:
+    desc: Check code formatting
+    cmds:
+      - ruff format --check ./backend
+
+  format:
+    desc: Run all code formatting
+    cmds:
+      - task: format:sort-env-files
+      - task: format:code
+
+  ruff:
+    desc: Check code through Ruff
+    cmds:
+      - ruff check ./backend
+
+  {%- if mypy != 'no' %}
+  mypy:
+    desc: Check code through MyPy
+    cmds:
+      - mypy --follow-imports=silent ./backend
+  {%- endif %}
+
+  deps:
+    desc: Check dependencies through deps-py
+    cmds:
+      - deps-py validate --project-path=./
+    dir: ./backend/app
+
+  all:
+    desc: Run all linters
+    cmds:
+      - task: format:check
+      - task: ruff
+      {%- if mypy != 'no' %}
+      - task: mypy
+      {%- endif %}
+      - task: deps

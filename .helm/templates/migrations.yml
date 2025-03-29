@@ -1,0 +1,46 @@
+{{ '{{' }} $app := (index .Values "{{ project_slug }}") {{ '}}' }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migration-{{ '{{' }} date "20060102150405" now {{ '}}' }}
+  annotations:
+    werf.io/weight: "-1"
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      imagePullSecrets:
+        - name: registrysecret
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: {{ '{{' }} .Values.werf.image.app {{ '}}' }}
+        command: ["task", "ci:migrations:upgrade"]
+        env:
+        {{ '{{' }}- range $k, $v := $app.env {{ '}}' }}
+        - name: {{ '{{' }} $k {{ '}}' }}
+          value: {{ '{{' }} $v | quote {{ '}}' }}
+        {{ '{{' }}- end {{ '}}' }}
+        {{ '{{' }}- if $app.postgres.enabled {{ '}}' }}
+        - name: "POSTGRES_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: {{ '{{' }} .Chart.Name {{ '}}' }}.postgres-{{ '{{' }} .Chart.Name {{ '}}' }}-{{ '{{' }} .Values.werf.env {{ '}}' }}.credentials
+              key: password
+        - name: "POSTGRES_USER"
+          valueFrom:
+            secretKeyRef:
+              name: {{ '{{' }} .Chart.Name {{ '}}' }}.postgres-{{ '{{' }} .Chart.Name {{ '}}' }}-{{ '{{' }} .Values.werf.env {{ '}}' }}.credentials
+              key: username
+        - name: "POSTGRES_HOST"
+          value: "postgres-{{ '{{' }} .Chart.Name {{ '}}' }}-{{ '{{' }} .Values.werf.env {{ '}}' }}.{{ '{{' }} .Values.werf.namespace {{ '}}' }}.svc.cluster.local"
+        - name: "POSTGRES_PORT"
+          value: "5432"
+        - name: "POSTGRES_DB"
+          value: {{ '{{' }} $.Chart.Name | lower | replace "-" "_" | quote {{ '}}' }}
+        {{ '{{' }}- end {{ '}}' }}
+        {{ '{{' }}- range $env := $app.envValueFrom {{ '}}' }}
+        - name: {{ '{{' }} $env.name {{ '}}' }}
+          valueFrom:
+{{ '{{' }} toYaml $env.valueFrom | indent 12 {{ '}}' }}
+        {{ '{{' }}- end {{ '}}' }}

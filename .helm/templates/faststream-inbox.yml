@@ -1,0 +1,37 @@
+{{ '{{' }} $app := (index .Values "faststream") {{ '}}' }}
+{{ '{{' }}- if $app.cleanup.enabled {{ '}}' }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ '{{' }} $.Chart.Name {{ '}}' }}-faststream-inbox-cleanup
+spec:
+  schedule: "{{ '{{' }} $app.cleanup.schedule {{ '}}' }}"
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 5
+  successfulJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+            annotations:
+              linkerd.io/inject: disabled
+        spec:
+          imagePullSecrets:
+          - name: registrysecret
+          activeDeadlineSeconds: 100
+          restartPolicy: Never
+          containers:
+            - name: cleanup
+              image: {{ '{{' }} .Values.werf.image.app {{ '}}' }}
+              command: [ "task", "faststream:run:cleanup" ]
+              env:
+              {{ '{{' }}- range $k, $v := $app.env {{ '}}' }}
+                - name: {{ '{{' }} $k {{ '}}' }}
+                  value: {{ '{{' }} $v | quote {{ '}}' }}
+              {{ '{{' }}- end {{ '}}' }}
+              {{ '{{' }}- range $env := $app.envValueFrom {{ '}}' }}
+                - name: {{ '{{' }} $env.name {{ '}}' }}
+                  valueFrom:
+{{ '{{' }} toYaml $env.valueFrom | indent 20 {{ '}}' }}
+              {{ '{{' }}- end {{ '}}' }}
+{{ '{{' }}- end {{ '}}' }}

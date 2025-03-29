@@ -1,0 +1,59 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "{{ project_name }} health check API",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000"
+        }
+    ],
+    "tags": [
+        {
+            "name": "healthcheck",
+            "description": ""
+        }
+    ],
+    "paths": {
+        "/healthcheck": {
+            "get": {
+                "tags": [
+                    "healthcheck"
+                ],
+                "operationId": "healthcheck",
+                "description": "healthcheck - description",
+                "summary": "healthcheck - summary",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/healthCheckResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {},
+        "schemas": {
+            "healthCheckResponse":{
+                "type": "object",
+                "properties": {
+                    "status":{
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

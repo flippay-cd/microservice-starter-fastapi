@@ -1,0 +1,6 @@
+ignore_components = ["tests"]
+root_in_imports = false
+
+[validation]
+max_entanglement = 53
+max_cyclicity = 0

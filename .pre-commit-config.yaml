@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: task-pre-commit
+        name: Pre-commit task
+        description: Runs pre-commit task from Taskfile.yml
+        entry: task pre-commit:hook
+        language: system
+        always_run: true
+        fail_fast: true
+        pass_filenames: false
+        verbose: true
+        stages:
+          - pre-commit
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-docstring-first
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements

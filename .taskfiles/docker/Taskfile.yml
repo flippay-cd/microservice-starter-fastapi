@@ -1,0 +1,41 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  login:gitlab:
+    desc: Login to GitLab Docker Registry
+    cmds:
+      - docker login registry.tripster.ru -u ${DOCKER_GITLAB_USER} -p ${DOCKER_GITLAB_TOKEN}
+    preconditions:
+      - sh: test -n "$DOCKER_GITLAB_USER" -a -n "$DOCKER_GITLAB_TOKEN"
+        msg: "You need to set environment variables DOCKER_GITLAB_USER and DOCKER_GITLAB_TOKEN"
+    run: once
+
+  up:
+    desc: Run infrastructure in Docker
+    cmds:
+      - COMPOSE_PROFILES=infrastructure docker compose up -d --build
+    deps:
+      - :setup:local-env
+      - :setup:openapi
+
+  stop:
+    desc: Stop infrastructure in Docker
+    cmds:
+      - COMPOSE_PROFILES=infrastructure docker compose stop
+    deps:
+      - :setup:local-env
+
+  shell:
+    desc: Run shell in container
+    cmds:
+      - COMPOSE_PROFILES=shell,infrastructure docker compose run --rm shell
+    deps:
+      - :setup:local-env
+      - :setup:openapi
+
+  pre-commit:
+    desc: Run all necessary checks before committing in Docker
+    cmds:
+      - docker compose run --rm --no-deps backend pre-commit

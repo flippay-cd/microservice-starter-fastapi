@@ -1,0 +1,127 @@
+.env_template: &env
+  PROJECT_NAME: {{ project_name }}
+{%- if http_framework == 'fastapi' %}
+  API_GATEWAY_PATH: "/{{ api_gateway_path }}"
+{%- endif %}
+{%- if cache == 'redis' %}
+  REDIS_HOST: "redis-{{ project_slug }}-staging.tripster-{{ project_slug }}-staging.svc.cluster.local"
+  REDIS_PORT: "6379"
+{%- endif %}
+{%- if broker == 'rabbitmq' %}
+  RABBITMQ_USER: rabbitmq
+  RABBITMQ_HOST: "rabbitmq-tripster.rabbit-develop.svc.cluster.local"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_QUEUE: "{{ package_name }}"
+{%- endif %}
+{%- if db == 'postgres' %}
+.postgres_env_template: &postgres_env
+  POSTGRES_HOST: "postgres-{{ project_slug }}-staging.tripster-{{ project_slug }}-staging.svc.cluster.local"
+  POSTGRES_DB: "{{ package_name }}"
+  POSTGRES_USER: "{{ package_name }}"
+  POSTGRES_PORT: "5432"
+.postgres_env_value_from_template: &postgres_env_value_from
+  envValueFrom:
+  - name: POSTGRES_USER
+    valueFrom:
+      secretKeyRef:
+        name: "{{ project_slug }}.postgres-{{ project_slug }}-staging.credentials"
+        key: username
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "{{ project_slug }}.postgres-{{ project_slug }}-staging.credentials"
+        key: password
+{%- endif %}
+
+{%- if db == 'postgres' %}
+  postgres:
+    enabled: true
+    multitenancy: false
+{%- endif %}
+
+{{ project_slug }}:
+  port: 8000
+{%- if ingress != 'no' %}
+  ingress:
+    dex_enabled: false
+    enabled: true
+{%- if ingress == 'public' %}
+    generate_certificate: false
+    tls_name: "staging.k8s-dev.{{ top_domain }}-wild-tls"
+    strip_to_root: true
+    url: "*.staging.k8s-dev.{{ top_domain }}"
+    paths: [
+      "/{{ api_gateway_path }}",
+    ]
+{%- endif %}
+{%- if ingress == 'public-subdomain' %}
+    generate_certificate: true
+    tls_name: "{{ project_slug }}.dev.tripster.tech-wild-tls"
+    url: "{{ project_slug }}.dev.tripster.tech"
+    paths: [
+      "/",
+    ]
+{%- endif %}
+{%- endif %}
+  resources:
+    cpu: 100m
+    memory: 512Mi
+  priority_class: "develop"
+  hpa:
+    min_replicas: 1
+    max_replicas: 1
+    averageValue: 70
+  pdb:
+    max_unavailable: "100%"
+  env:
+    <<: *env
+
+{%- if worker == 'dramatiq' %}
+dramatiq-worker:
+  replicas: 1
+  hpa:
+    min_replicas: 1
+    max_replicas: 1
+    averageValue: 70
+  pdb:
+    max_unavailable: "100%"
+  command: ["task", "dramatiq:run:prod"]  # TODO: update chart to support args instead of command
+  healthcheck:
+    enabled: false
+  resources:
+    cpu: 100m
+    memory: 512Mi
+  env:
+    <<: *env
+  {%- if db == 'postgres' %}
+    <<: *postgres_env
+  <<: *postgres_env_value_from
+  {%- endif %}
+{%- endif %}
+
+{%- if event_bus_consumer == 'faststream' %}
+faststream:
+  replicas: 1
+  port: 8000
+  hpa:
+    min_replicas: 1
+    max_replicas: 1
+    averageValue: 70
+  pdb:
+    max_unavailable: "100%"
+  command: ["task", "faststream:run:prod"]  # TODO: update chart to support args instead of command
+  healthcheck:
+    enabled: true
+  resources:
+    memory: 512Mi
+    cpu: 100m
+  cleanup:
+    enabled: true
+    schedule: "0 1 * * *" # At 01:00 every day
+  env:
+    <<: *env
+  {%- if db == 'postgres' %}
+    <<: *postgres_env
+  <<: *postgres_env_value_from
+  {%- endif %}
+{%- endif %}

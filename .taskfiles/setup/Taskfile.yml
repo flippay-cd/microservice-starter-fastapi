@@ -1,0 +1,36 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  local-env:
+    desc: Create .env file
+    cmds:
+      - cp .env-template .env
+      - cp .env-docker-template .env-docker
+      - cp .env-taskfile-template .env-taskfile
+      - task: :lint:format:sort-env-files
+    sources:
+      - .env-template
+      - .env-docker-template
+      - .env-taskfile-template
+    generates:
+      - .env
+      - .env-docker
+      - .env-taskfile
+    run: once
+
+  openapi:
+    desc: Generate openapi
+    cmds:
+      - docker compose up --build openapi
+    sources:
+      - ./openapi/*.json
+    generates:
+      - ./backend/app/api/**/*.py
+    env:
+      OPENAPI_UID:
+        sh: id -u
+      OPENAPI_GID:
+        sh: id -g
+    run: once

@@ -1,0 +1,269 @@
+[project]
+name = "{{ project_slug }}"
+requires-python = ">= 3.13,< 3.14"
+dynamic = ["version"]
+readme = "README.md"
+dependencies = [
+    "dependency-injector~=4.46.0",
+    "pydantic[email]~=2.10.6",
+    "pydantic-settings~=2.8.0",
+    "sentry-sdk[fastapi]~=2.22.0",
+    "httpx~=0.28.1",
+    "orjson~=3.10.15",
+    "structlog~=25.1.0",
+    "json-logging~=1.3.0",
+    "ipython~=8.32.0",
+    {%- if worker == "dramatiq" %}
+    "dramatiq~=1.17.1",
+    {%- endif %}
+
+    {%- if analytics == "clickhouse" %}
+    "asynch~=0.2.5",
+    {%- endif %}
+
+    {%- if http_framework == "fastapi" %}
+    {%- if ingress != "no" %}
+    "exp-auth-client==2.5.0",
+    {%- endif %}
+    "fastapi~=0.115.6",
+    "prometheus-fastapi-instrumentator~=7.0.2",
+    "starlette-context~=0.3.6",
+    "fastapi-lifespan-manager~=0.1.4",
+    {%- endif %}
+
+    {%- if db != "no" %}
+    "alembic~=1.14.1",
+    "exp-async-db~=0.1.7",
+    {%- endif %}
+
+    {%- if cache == "redis" %}
+    "redis~=5.2.1",
+    {%- endif %}
+
+    {%- if broker == "rabbitmq" %}
+    "aio-pika~=9.5.4",
+    {%- endif %}
+
+    {%- if event_bus_consumer == "faststream" %}
+    "faststream[rabbit,cli]~=0.5.34",
+    "cloudevents~=1.11.0",
+    "faststream-inbox~=0.1.4",
+    {%- endif %}
+
+    {%- if event_bus_consumer == "faststream" or http_framework == "fastapi" %}
+    "uvicorn[standard]~=0.34.0",
+    {%- endif %}
+]
+
+[dependency-groups]
+pycharm = [
+    "setuptools",
+    "pip",
+]
+dev = [
+    "copier~=9.4.1",
+    "pre-commit~=4.1.0",
+    "ruff~=0.10.0",
+    "mypy~=1.14.1",
+    "depsPy~=0.2.1",
+    "pytest~=8.3.4",
+    "pytest-asyncio~=0.25.2",
+    "pytest-cov~=6.0.0",
+    "pytest-custom-exit-code~=0.3.0",
+    "pytest-mock~=3.14.0",
+    "pytest-xdist~=3.6.1",
+    "freezegun~=1.5.1",
+]
+
+[tool.uv]
+default-groups = ["dev", "pycharm"]
+
+[[tool.uv.index]]
+name = "tripster"
+url = "https://gitlab.tripster.ru/api/v4/groups/142/-/packages/pypi/simple"
+
+[tool.setuptools]
+package-dir = {"" = "backend/app"}
+
+[tool.ruff]
+target-version = "{{ ruff_target_version }}"
+line-length = 120
+src = ["backend/app"]
+show-fixes = true
+
+{%- if linter_strictness == "strict" %}
+[tool.ruff.lint]
+select = [
+    "ALL",
+]
+ignore = [
+    "D",  # pydocstyle
+    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+    "EM",  # Exception must not use a string literal, assign to variable first
+    "TD002",  # Missing author in TODO
+    "TD003",  # Missing issue link on the line following this TODO
+    "TD004",  # Missing colon in TODO
+    "FIX002",  # Line contains TODO, consider resolving the issue
+    "PTH123",  # open() should be replaced by Path.open()
+    "UP040",  # Type alias uses TypeAlias annotation instead of the type keyword
+    "COM812",  # Trailing comma missing
+    "RUF001",  # String contains ambiguous letter
+    "RUF002",  # Docstring contains ambiguous letter
+    "RUF003",  # Comment contains ambiguous letter,
+    "ISC001",  # Implicit string concatenation
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = [
+    "ANN001",  # Missing type annotation for function argument
+    "ANN201",  # Missing return type annotation for public function
+    "S101",  # Use of assert detected
+    "S105",  # https://docs.astral.sh/ruff/rules/hardcoded-password-string/
+    "S608",  # https://docs.astral.sh/ruff/rules/hardcoded-sql-expression/
+    "SLF001",  # Private member accessed
+    "PLR0913",  # Too many arguments in function definition
+    "FBT001",  # Boolean-typed positional argument in function definition
+]
+"*/migrations/**/*.py" = [
+    "INP001",  # File is part of an implicit namespace package. Add an __init__.py.
+    "SLF001"  # Private member accessed
+]
+"**/conftest.py" = [
+    "ANN001",  # Missing type annotation for function argument
+    "ANN201",  # Missing return type annotation for public function
+    "S105",  # https://docs.astral.sh/ruff/rules/hardcoded-password-string/
+    "S608",  # https://docs.astral.sh/ruff/rules/hardcoded-sql-expression/
+]
+"**/fixtures.py" = [
+    "ANN001",  # Missing type annotation for function argument
+    "ANN201",  # Missing return type annotation for public function
+    "S105",  # https://docs.astral.sh/ruff/rules/hardcoded-password-string/
+    "S608",  # https://docs.astral.sh/ruff/rules/hardcoded-sql-expression/
+]
+"**/fixtures/*.py" = [
+    "ANN001",  # Missing type annotation for function argument
+    "ANN201",  # Missing return type annotation for public function
+    "S105",  # https://docs.astral.sh/ruff/rules/hardcoded-password-string/
+    "S608",  # https://docs.astral.sh/ruff/rules/hardcoded-sql-expression/
+]
+{%- elif linter_strictness == "default" %}
+extend-exclude = ["backend/app/api"]  # отключаем пока не доработан генератор
+
+[tool.ruff.lint]
+select = [
+    # Full linters
+    "F",   # pyflakes https://docs.astral.sh/ruff/rules/#pyflakes-f
+    "E",   # pycodestyle errors https://docs.astral.sh/ruff/rules/#error-e
+    "W",   # pycodestyle warnings https://docs.astral.sh/ruff/rules/#warning-w
+    "I",   # isort https://docs.astral.sh/ruff/rules/#isort-i
+    "C90", # mccabe https://docs.astral.sh/ruff/rules/#mccabe-c90
+    "B",   # flake8-bugbear https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+    "C4",  # flake8-comprehensions https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
+    "UP",  # pyupgrade https://docs.astral.sh/ruff/rules/#pyupgrade-up
+    "DTZ", # datetimez https://docs.astral.sh/ruff/rules/#flake8-datetimez-dtz
+    "ASYNC",  # flake8-async https://docs.astral.sh/ruff/rules/#flake8-async-async
+
+    # Partial linters
+    "FBT002",  # https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument/
+    "G001",  # https://docs.astral.sh/ruff/rules/logging-string-format/
+    "G004",  # https://docs.astral.sh/ruff/rules/logging-f-string/
+    "INT001",  # https://docs.astral.sh/ruff/rules/f-string-in-get-text-func-call/
+    "N815",  # https://docs.astral.sh/ruff/rules/mixed-case-variable-in-class-scope/
+    "PLW2901",  # https://docs.astral.sh/ruff/rules/redefined-loop-name/
+    "PT001",  # https://docs.astral.sh/ruff/rules/pytest-fixture-incorrect-parentheses-style/
+    "PT006",  # https://docs.astral.sh/ruff/rules/pytest-parametrize-names-wrong-type/
+    "PT007",  # https://docs.astral.sh/ruff/rules/pytest-parametrize-values-wrong-type/
+    "PT014",  # https://docs.astral.sh/ruff/rules/pytest-duplicate-parametrize-test-cases/
+    "RSE102",  # https://docs.astral.sh/ruff/rules/unnecessary-paren-on-raise-exception/
+    "RUF005",  # https://docs.astral.sh/ruff/rules/collection-literal-concatenation/
+    "RUF015",  # https://docs.astral.sh/ruff/rules/unnecessary-iterable-allocation-for-first-element/
+    "S105",  # https://docs.astral.sh/ruff/rules/hardcoded-password-string/
+    "S608",  # https://docs.astral.sh/ruff/rules/hardcoded-sql-expression/
+    "SIM118",  # https://docs.astral.sh/ruff/rules/in-dict-keys/
+    "PTH118",  # https://docs.astral.sh/ruff/rules/os-path-join/
+    "Q000",  # https://docs.astral.sh/ruff/rules/bad-quotes-inline-string/
+]
+ignore = [
+    "E731",  # https://docs.astral.sh/ruff/rules/lambda-assignment/
+    "E203",  # https://docs.astral.sh/ruff/rules/whitespace-before-punctuation/
+    "B008",  # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
+    "B904",  # https://docs.astral.sh/ruff/rules/raise-without-from-inside-except/
+    "UP032"  # https://docs.astral.sh/ruff/rules/f-string/
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/test_*.py" = [
+    "F401",  # https://docs.astral.sh/ruff/rules/unused-import/
+    "F811"   # https://docs.astral.sh/ruff/rules/redefined-while-unused/
+]
+"*/models/*.py" = [
+    "UP006", # https://docs.astral.sh/ruff/rules/non-pep585-annotation/
+    "UP007", # https://docs.astral.sh/ruff/rules/non-pep604-annotation/
+    "UP035"  # https://docs.astral.sh/ruff/rules/deprecated-import/
+]
+"*/alembic/versions/*.py" = [
+    "UP007"  # https://docs.astral.sh/ruff/rules/non-pep604-annotation/
+]
+{%- endif %}
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "sqlalchemy.orm.DeclarativeBase"]
+runtime-evaluated-decorators = ["pydantic.validate_call", "attrs.define", "dependency_injector.wiring.inject"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["api"]
+
+{%- if mypy == "yes" %}
+[tool.pytest.ini_options]
+pythonpath = "backend/app"
+addopts = ["--import-mode=importlib", "--suppress-no-test-exit-code"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+
+[tool.mypy]
+python_version = "{{ mypy_target_version }}"
+disallow_any_unimported = false
+disallow_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+check_untyped_defs = true
+show_error_codes = true
+plugins = [
+    "pydantic.mypy"
+]
+
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "api.*",
+    "*.fixtures.*",
+    "*.tests.*"
+]
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = [
+    "celery.*",
+    "kombu.*",
+    "factory.*",
+    "asyncpg.*",
+    "sqlalchemy_utils.*",
+    "asynch.*",
+    "redis_lock.*",
+    "tenacity.*",
+]
+ignore_missing_imports = true
+{%- endif %}

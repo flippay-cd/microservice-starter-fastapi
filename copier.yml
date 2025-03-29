@@ -1,0 +1,195 @@
+_templates_suffix: ""
+_tasks:
+    - ["{{ _copier_python }}", "_copier_hooks/post_gen.py"]
+    - "rm -rf ./_copier_hooks"
+    - "cp .env-taskfile-template .env-taskfile"
+
+project_name:
+    type: str
+    help: "Project Name"
+    placeholder: "Awesome Service"
+    validator: >-
+      {% if not (project_name | regex_search('^[a-zA-Z][a-zA-Z0-9\-\s]+$')) %}
+      project_name must start with a letter, followed one or more letters, digits or dashes.
+      {% endif %}
+
+project_slug:
+    type: str
+    help: "Project Slug"
+    default: "{{ project_name.lower()|replace(' ', '-')|replace('.', '-')|trim() }}"
+
+package_name:
+    type: str
+    help: "Package Name"
+    default: "{{ project_name.lower()|replace(' ', '_')|replace('-', '_')|replace('.', '_')|trim() }}"
+
+docker_compose_project_name:
+    type: str
+    help: "Docker Compose Project Name"
+    default: "{{ project_name.lower()|replace(' ', '-')|replace('.', '-')|trim() }}"
+    when: false
+
+top_domain:
+    type: str
+    help: "Top Domain"
+    default: "tripster.ru"
+
+ingress:
+    type: str
+    help: "Ingress"
+    default: "no"
+    choices:
+        - "no"
+        - "public"
+        - "public-subdomain"
+
+api_gateway_path:
+    type: str
+    help: "API Gateway Path"
+    default: "{{ project_name.lower()|replace(' ', '-')|replace('.', '-')|replace('-service', '')|trim() }}"
+    when: "{{ ingress == 'public' }}"
+
+python_version:
+    type: str
+    help: "Python Version"
+    default: "3.13"
+    choices:
+        - "3.13"
+        - "3.12"
+
+ruff_target_version:
+    type: str
+    help: "Ruff Target Version"
+    default: "py{{ python_version.split('.')[:2] | join('') }}"
+    when: false
+
+mypy:
+    type: str
+    help: "Mypy Static Type Checker"
+    default: "no"
+    choices:
+        - "no"
+        - "yes"
+
+mypy_target_version:
+    type: str
+    help: "Mypy Target Version"
+    default: "{{ python_version.split('.')[:2] | join('.') }}"
+    when: "{{ mypy == 'yes' }}"
+
+linter_strictness:
+    type: str
+    help: "Linter Strictness"
+    default: "default"
+    choices:
+        - "default"
+        - "strict"
+
+docker_debian_version:
+    type: str
+    help: "Docker Debian Version"
+    default: "bookworm"
+    choices:
+        - "bookworm"
+        - "bullseye"
+
+docker_build_image:
+    type: str
+    help: "Docker Build Image"
+    default: "python:{{ python_version }}-{{ docker_debian_version }}"
+    when: false
+
+docker_image:
+    type: str
+    help: "Docker Image"
+    default: "python:{{ python_version }}-slim-{{ docker_debian_version }}"
+    when: false
+
+http_framework:
+    type: str
+    help: "HTTP Framework"
+    default: "fastapi"
+    choices:
+        - "no"
+        - "fastapi"
+
+worker:
+    type: str
+    help: "Worker"
+    default: "no"
+    choices:
+        - "no"
+        - "dramatiq"
+
+event_bus_consumer:
+    type: str
+    help: "Event Bus Consumer"
+    default: "no"
+    choices:
+        - "no"
+        - "faststream"
+
+db:
+    type: str
+    help: "Database"
+    default: "no"
+    choices:
+        - "no"
+        - "postgres"
+
+postgres_version:
+    type: str
+    help: "Postgres Version"
+    default: "17"
+    choices:
+        - "17"
+        - "16"
+    when: "{{ db == 'postgres' }}"
+
+cache:
+    type: str
+    help: "Cache"
+    default: |-
+        {% if worker == 'dramatiq' -%}
+            redis
+        {%- else -%}
+            no
+        {%- endif %}
+    choices:
+        - "no"
+        - "redis"
+
+broker:
+    type: str
+    help: "Broker"
+    default: |-
+        {% if worker == 'dramatiq' or event_bus_consumer == 'faststream' -%}
+            rabbitmq
+        {%- else -%}
+            no
+        {%- endif %}
+    choices:
+        - "no"
+        - "rabbitmq"
+
+rabbitmq_version:
+    type: str
+    help: "RabbitMQ Version"
+    default: "3.13"
+    choices:
+        - "3.13"
+        - "3.12"
+    when: "{{ broker == 'rabbitmq' or worker == 'dramatiq' or event_bus_consumer == 'faststream' }}"
+
+analytics:
+    type: str
+    help: "Analytics"
+    default: "no"
+    choices:
+        - "no"
+        - "clickhouse"
+
+helm_chart_version:
+    type: str
+    help: "Helm Chart Version"
+    default: "^1.19.1"

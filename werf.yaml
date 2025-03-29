@@ -1,0 +1,22 @@
+project: "{{ project_slug }}"
+configVersion: 1
+---
+image: app
+dockerfile: Dockerfile
+target: app
+staged: true
+args:
+  CI_SERVER_HOST: {{ '{{' }} env "CI_SERVER_HOST" {{ '}}' }}
+  CI_JOB_TOKEN: {{ '{{' }} env "PKG_REGISTRY_RO_TOKEN" {{ '}}' }}
+  CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX: {{ '{{' }} if env "CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX" {{ '}}' }}{{ '{{' }} env "CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX" {{ '}}' }}/{{ '{{' }} else {{ '}}' }}{{ '{{' }} "" {{ '}}' }}{{ '{{' }} end {{ '}}' }}
+{{ '{{' }}- if or (env "ENABLE_DEV_IMAGES" | eq "true") (env "ENABLE_ALL_IMAGES" | eq "true") {{ '}}' }}
+---
+image: dev
+dockerfile: Dockerfile
+target: dev
+staged: true
+args:
+  CI_SERVER_HOST: {{ '{{' }} env "CI_SERVER_HOST" {{ '}}' }}
+  CI_JOB_TOKEN: {{ '{{' }} env "PKG_REGISTRY_RO_TOKEN" {{ '}}' }}
+  CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX: {{ '{{' }} if env "CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX" {{ '}}' }}{{ '{{' }} env "CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX" {{ '}}' }}/{{ '{{' }} else {{ '}}' }}{{ '{{' }} "" {{ '}}' }}{{ '{{' }} end {{ '}}' }}
+{{ '{{' }}- end {{ '}}' }}

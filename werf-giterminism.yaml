@@ -1,0 +1,10 @@
+---
+giterminismConfigVersion: 1
+config:
+  goTemplateRendering:
+    allowEnvVariables:
+      - ENABLE_ALL_IMAGES
+      - ENABLE_DEV_IMAGES
+      - CI_SERVER_HOST
+      - PKG_REGISTRY_RO_TOKEN
+      - CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX

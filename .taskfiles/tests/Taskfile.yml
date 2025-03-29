@@ -1,0 +1,10 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  pytest:
+    desc: Run tests
+    cmds:
+      - pytest -n 1 --last-failed --last-failed-no-failures all .
+    dir: ./backend/app

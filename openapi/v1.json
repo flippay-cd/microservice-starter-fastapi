@@ -1,0 +1,27 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "{{ project_name }} API",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api"
+        }
+    ],
+    "tags": [
+
+    ],
+    "paths": {
+
+    },
+    "components": {
+        "securitySchemes": {},
+        "schemas": {
+
+        }
+    }
+}

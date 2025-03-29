@@ -1,0 +1,22 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  run:dev:
+    desc: Run faststream server in development
+    cmds:
+      - uvicorn main_stream:app --host 127.0.0.1 --port 8000
+    dir: ./backend/app
+
+  run:prod:
+    desc: Run faststream server in production
+    cmds:
+      - uvicorn main_stream:app --host 0.0.0.0 --port 8000
+    dir: ./backend/app
+
+  run:cleanup:
+    desc: Run faststream inbox cleanup
+    cmds:
+      - python -m management.commands.faststream_inbox_cleanup
+    dir: ./backend/app

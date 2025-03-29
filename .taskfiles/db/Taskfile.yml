@@ -1,0 +1,100 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  migrations:history:
+    desc: View migration history
+    cmds:
+      - alembic history
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+
+  migrations:generate:
+    desc: Generate migrations
+    cmds:
+      - |
+        read -p "Enter a description of the migration: " MESSAGE
+        alembic revision --autogenerate -m "${MESSAGE}"
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+
+  migrations:empty:
+    desc: Create an empty migration
+    cmds:
+      - |
+        read -p "Enter a description of the migration: " MESSAGE
+        alembic revision -m "${MESSAGE}"
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+
+  migrations:upgrade:
+    desc: Run all migrations
+    cmds:
+      - alembic upgrade head
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+      - :docker:up
+      - migrations:check:pre-migrate
+
+  migrations:upgrade:rev:
+    desc: Migrate to a specific version
+    cmds:
+      - |
+        read -p "Enter revision number: " REVISION
+        alembic upgrade "${REVISION}"
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+      - :docker:up
+
+  migrations:downgrade:last:
+    desc: Rollback the last migration
+    cmds:
+      - alembic downgrade -1
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+      - :docker:up
+
+  migrations:downgrate:rev:
+    desc: Rollback migration to a specific version
+    cmds:
+      - |
+        read -p "Enter revision number: " REVISION
+        alembic downgrade "${REVISION}"
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+      - :docker:up
+
+  migrations:check:
+    desc: Check migrations
+    cmds:
+      - python migrations/check_migrations.py --config alembic.ini
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+      - :docker:up
+
+  migrations:check:pre-migrate:
+    desc: Check migrations before migrating
+    cmds:
+      - python migrations/check_migrations.py --config alembic.ini --silent-diff-check
+    dir: ./backend/app
+    deps:
+      - :setup:local-env
+      - :python:requirements
+      - :docker:up

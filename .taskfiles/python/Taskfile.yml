@@ -1,0 +1,41 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  requirements:
+    desc: Compile uv.lock and synchronize local environment with it
+    cmds:
+      - task: requirements:lock
+      - task: requirements:sync
+    preconditions:
+      - sh: test -n "$VIRTUAL_ENV"
+        msg: "You need to run from virtualenv"
+    run: once
+
+  requirements:lock:
+    desc: Compile uv.lock file from pyproject.toml
+    cmds:
+      - uv lock
+    generates:
+      - uv.lock
+    sources:
+      - pyproject.toml
+    run: once
+
+  requirements:sync:
+    desc: Synchronize dependencies in local environment with uv.lock
+    cmds:
+      - uv sync --locked
+    run: once
+
+  clean-pyc:
+    desc: Delete pyc files
+    cmds:
+      - find . -name "*.pyc" -exec rm -f {} \;
+
+  shell:
+    desc: Run interactive shell similar to django-shell
+    dir: backend/app
+    cmds:
+      - python shell.py

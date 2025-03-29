@@ -1,0 +1,51 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  helm:add:
+    desc: Add helm chart to project
+    cmds:
+      - |
+        werf helm repo add --force-update --username $DOCKER_GITLAB_USER --password $DOCKER_GITLAB_TOKEN \
+          helm-tripster-app https://gitlab.tripster.ru/api/v4/projects/100/packages/helm/stable
+    preconditions:
+      - sh: test -n "$DOCKER_GITLAB_USER" -a -n "$DOCKER_GITLAB_TOKEN"
+        msg: "You need to set environment variables DOCKER_GITLAB_USER and DOCKER_GITLAB_TOKEN"
+    run: once
+
+  helm:update:
+    desc: Update Helm Charts
+    cmds:
+      - werf helm dependency update .helm
+
+  helm:generate-secret:
+    desc: Generate secrets for Helm
+    cmds:
+      - werf helm secret generate-secret-key > .werf_secret_key
+    generates:
+      - .werf_secret_key
+
+  helm:secret:edit:staging:
+    desc: Edit secrets for Helm in staging
+    cmds:
+      - werf helm secret values edit .helm/staging/secret-values.yaml
+    preconditions:
+      - sh: test -f .werf_secret_key
+        msg: "You need to generate secret key"
+
+  helm:secret:edit:production:
+    desc: Edit secrets for Helm in production
+    cmds:
+      - werf helm secret values edit .helm/production/secret-values.yaml
+    preconditions:
+      - sh: test -f .werf_secret_key
+        msg: "You need to generate secret key"
+
+  helm:debug:staging:
+    desc: Debug Helm in staging
+    cmds:
+      - |
+        werf helm template .helm --debug=true \
+          --values=./.helm/staging/values.yaml \
+          --values=./.helm/staging/secret-values.yaml

@@ -1,0 +1,40 @@
+# Common
+README.md
+CHANGELOG.md
+TODO.md
+docker-compose*.yml
+.editorconfig
+.dockerignore
+# git
+.git/
+.gitattributes
+.gitignore
+.pre-commit-config.yaml
+# JetBrains
+.idea/
+# DevOps
+.helm/
+.gitlab-ci.yml
+werf.yaml
+werf-giterminism.yaml
+# Python
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/htmlcov/
+**/.DS_Store/
+**/celerybeat-schedule.db
+**/*.sqlite3
+**/*.db
+.env
+.env-template
+.env-taskfile
+.env-taskfile-template
+.env-docker
+.env-docker-template
+*.py[cod]
+.python-version
+flake-report
+.copier-answers.yml
+.httpx
