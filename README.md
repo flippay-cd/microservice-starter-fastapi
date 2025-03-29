@@ -10,7 +10,7 @@
 
 ### Creating a new project from the template
 
-`copier copy --trust "git@gitlab.tripster.ru:experience/microservice-starter.git" ./`
+`copier copy --trust "git@https://github.com/flippay-cd/microservice-starter-fastapi.git" ./`
 
 ### Update project from the template
 
