@@ -20,7 +20,7 @@
 
 * [Setups](./.docs/local_setup.md)
 * [Development](./.docs/development.md)
-* [Gitlab](./.docs/gitlab.md)
+* [Github](./.docs/github.md)
 
 
 ### Infrastructure
